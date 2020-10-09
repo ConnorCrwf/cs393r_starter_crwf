@@ -190,14 +190,14 @@ void OdometryCallback(const nav_msgs::Odometry& msg) {
   const float odom_angle =
       2.0 * atan2(msg.pose.pose.orientation.z, msg.pose.pose.orientation.w);
   particle_filter_.ObserveOdometry(odom_loc, odom_angle);
-  // Vector2f robot_loc(0, 0);
-  // float robot_angle(0);
-  // particle_filter_.GetLocation(&robot_loc, &robot_angle);
-  // amrl_msgs::Localization2DMsg localization_msg;
-  // localization_msg.pose.x = robot_loc.x();
-  // localization_msg.pose.y = robot_loc.y();
-  // localization_msg.pose.theta = robot_angle;
-  // localization_publisher_.publish(localization_msg);
+  Vector2f robot_loc(0, 0);
+  float robot_angle(0);
+  particle_filter_.GetLocation(&robot_loc, &robot_angle);
+  amrl_msgs::Localization2DMsg localization_msg;
+  localization_msg.pose.x = robot_loc.x();
+  localization_msg.pose.y = robot_loc.y();
+  localization_msg.pose.theta = robot_angle;
+  localization_publisher_.publish(localization_msg);
   PublishVisualization();
 }
 

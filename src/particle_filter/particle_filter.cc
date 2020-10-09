@@ -221,10 +221,21 @@ void ParticleFilter::Initialize(const string& map_file,
     particle_init.loc.x() = rng_.Gaussian(loc.x(), 0.25);  // std_dev of 0.25m, to be tuned
     particle_init.loc.y() = rng_.Gaussian(loc.y(), 0.25);  // std_dev of 0.25m, to be tuned
     particle_init.angle   = rng_.Gaussian(angle, M_PI/6);  // std_dev of 30deg, to be tuned
-    particle_init.weight = 0;
+    particle_init.log_weight = 0;
     particles_.push_back(particle_init);
   }
 }
+
+// void ParticleFilter::GetLocation(Eigen::Vector2f* loc_ptr, 
+//                                  float* angle_ptr) const {
+//   Vector2f& loc = *loc_ptr;
+//   float& angle = *angle_ptr;
+//   // Compute the best estimate of the robot's location based on the current set
+//   // of particles. The computed values must be set to the `loc` and `angle`
+//   // variables to return them. Modify the following assignments:
+//   loc = Vector2f(0, 0);
+//   angle = 0;
+// }
 
 void ParticleFilter::GetLocation(Eigen::Vector2f* loc_ptr, 
                                  float* angle_ptr) const {
@@ -232,9 +243,28 @@ void ParticleFilter::GetLocation(Eigen::Vector2f* loc_ptr,
   float& angle = *angle_ptr;
   // Compute the best estimate of the robot's location based on the current set
   // of particles. The computed values must be set to the `loc` and `angle`
-  // variables to return them. Modify the following assignments:
-  loc = Vector2f(0, 0);
-  angle = 0;
+  // variables to return them.
+
+  // Just do weighted average of loc and angle
+  Vector2f weighted_loc_sum(0.0, 0.0);
+  float weighted_angle_sum = 0.0;
+  float weight_sum = 0.0;
+  for (auto &particle : particles_)
+  {
+
+    // Convert from log weight to normalized weight
+
+    // TODO: how do i introduce max_log_particle_weight_ without also using ObserveLaser?
+
+    // float normalized_log_weight = particle.log_weight - max_log_particle_weight_;
+    float normalized_log_weight = particle.log_weight;
+    float normalized_weight = exp(normalized_log_weight);
+    weighted_loc_sum += particle.loc * normalized_weight;
+    weighted_angle_sum += particle.angle * normalized_weight;
+    weight_sum += normalized_weight;
+  }
+  loc = weighted_loc_sum / weight_sum;
+  angle = weighted_angle_sum / weight_sum;
 }
 
 
