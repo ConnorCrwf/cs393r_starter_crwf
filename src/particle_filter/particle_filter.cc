@@ -46,7 +46,7 @@ using Eigen::Vector2f;
 using Eigen::Vector2i;
 using vector_map::VectorMap;
 
-DEFINE_double(num_particles, 50, "Number of particles");
+DEFINE_double(num_particles, 5, "Number of particles");
 
 namespace particle_filter {
 
@@ -158,14 +158,51 @@ void ParticleFilter::ObserveOdometry(const Vector2f& odom_loc,
   // A new odometry value is available (in the odom frame)
   // Implement the motion model predict step here, to propagate the particles
   // forward based on odometry.
+  if (particles_.empty()) return;
 
+  for (auto &particle : particles_){
+  //   //get current pose (location and angle) of particle (pre-noise applied to it)
+  //   //no idea what this & thingee is doing. i hate &s
+    const Vector2f odom_trans_diff = (odom_loc - prev_odom_loc_);
+    const float angle_diff = std::abs(odom_angle - prev_odom_angle_);
+    //apply noise to pose of particle
+    UpdateParticleLocation(odom_trans_diff,angle_diff, &particle);
+  }
 
-  // You will need to use the Gaussian random number generator provided. For
-  // example, to generate a random number from a Gaussian with mean 0, and
-  // standard deviation 2:
-  float x = rng_.Gaussian(0.0, 2.0);
-  printf("Random number drawn from Gaussian distribution with 0 mean and "
-         "standard deviation of 2 : %f\n", x);
+  prev_odom_loc_ = odom_loc;
+  prev_odom_angle_ = odom_angle;
+}
+
+void ParticleFilter::UpdateParticleLocation(Vector2f odom_trans_diff, float dtheta_odom, Particle* p_ptr)
+{
+  // Use the motion model to update each particle's location
+  // This function will probably be called in the ObserveOdometry callback
+  // You can update the particle location directly by modifying the particle variable
+  // defined above since it was passed by reference (using the "&" symbol).
+  // this particle passed by reference comes from ObserveLaser for loop
+  // and is modified by Update function similar to how it is being modified here
+  // but this occurs at every timestep
+
+  // noise constants to tune
+  //TODO give these names rot-translation stuff
+  float k1 = 0.05;
+  float k2 = 0.025;
+  float k3 = 0.01;
+  float k4 = 0.05;
+  
+  Particle& particle = *p_ptr;
+
+  //should the mean b
+  //is this how it should be, the meant is the same but the standard deviation, sigma, changes based on k constants
+  float eps_x = rng_.Gaussian(0.0,k1*odom_trans_diff.norm() + k2*dtheta_odom);
+  // future improvements wll use different constants for x and y to account for difference in slipping likelihood
+  float eps_y = rng_.Gaussian(0.0,k1*odom_trans_diff.norm() + k2*dtheta_odom);
+  float eps_angle = rng_.Gaussian(0.0,k3*odom_trans_diff.norm() + k4*dtheta_odom);
+  particle.loc += odom_trans_diff + Vector2f(eps_x,eps_y);
+  particle.angle += dtheta_odom + eps_angle;
+
+  cout << particle.loc << endl;
+
 }
 
 void ParticleFilter::Initialize(const string& map_file,
@@ -174,6 +211,19 @@ void ParticleFilter::Initialize(const string& map_file,
   // The "set_pose" button on the GUI was clicked, or an initialization message
   // was received from the log. Initialize the particles accordingly, e.g. with
   // some distribution around the provided location and angle.
+  particles_.clear(); // Need to get rid of particles from previous inits
+  map_.Load("maps/" + map_file + ".txt"); // from Piazza
+  cout << "Initialized " << map_file << " with " << map_.lines.size() << " lines!" << endl;
+
+  // Make initial guesses (particles) based on a Gaussian distribution about initial placement
+  for (size_t i = 0; i < FLAGS_num_particles; i++){
+    Particle particle_init;
+    particle_init.loc.x() = rng_.Gaussian(loc.x(), 0.25);  // std_dev of 0.25m, to be tuned
+    particle_init.loc.y() = rng_.Gaussian(loc.y(), 0.25);  // std_dev of 0.25m, to be tuned
+    particle_init.angle   = rng_.Gaussian(angle, M_PI/6);  // std_dev of 30deg, to be tuned
+    particle_init.weight = 0;
+    particles_.push_back(particle_init);
+  }
 }
 
 void ParticleFilter::GetLocation(Eigen::Vector2f* loc_ptr, 

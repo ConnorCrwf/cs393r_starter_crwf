@@ -55,6 +55,9 @@ class ParticleFilter {
   void ObserveOdometry(const Eigen::Vector2f& odom_loc,
                        const float odom_angle);
 
+  // Update a particle's location given current and last odom
+  void UpdateParticleLocation(Eigen::Vector2f odom_trans_diff, float dtheta_odom, Particle* p_ptr);
+
   // Initialize the robot location.
   void Initialize(const std::string& map_file,
                   const Eigen::Vector2f& loc,
