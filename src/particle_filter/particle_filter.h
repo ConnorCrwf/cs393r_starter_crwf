@@ -63,6 +63,9 @@ class ParticleFilter {
                   const Eigen::Vector2f& loc,
                   const float angle);
 
+
+  void ResetOdomVariables(const Eigen::Vector2f loc, const float angle);
+
   // Return the list of particles.
   void GetParticles(std::vector<Particle>* particles) const;
 
@@ -105,6 +108,11 @@ class ParticleFilter {
   Eigen::Vector2f prev_odom_loc_;
   float prev_odom_angle_;
   bool odom_initialized_;
+  float init_offset_angle_;
+
+  // Resampling variables
+  float max_log_particle_weight_;
+
 };
 }  // namespace slam
 
