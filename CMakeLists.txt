@@ -56,3 +56,6 @@ TARGET_LINK_LIBRARIES(navigation shared_library ${libs})
 
 ADD_EXECUTABLE(eigen_tutorial
                src/eigen_tutorial.cc)
+
+ADD_EXECUTABLE(transform_coordinate_frame
+               src/slam/transform_coordinate_frame.cc)
