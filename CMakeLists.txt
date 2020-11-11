@@ -59,3 +59,8 @@ ADD_EXECUTABLE(eigen_tutorial
 
 ADD_EXECUTABLE(transform_coordinate_frame
                src/slam/transform_coordinate_frame.cc)
+
+ROSBUILD_ADD_EXECUTABLE(node_visualization
+                src/globalPlanner/node_visualization_main.cc
+                src/globalPlanner/node_visualization.cc)
+TARGET_LINK_LIBRARIES(node_visualization shared_library ${libs})
